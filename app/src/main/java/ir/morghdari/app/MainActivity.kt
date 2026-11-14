@@ -647,7 +647,6 @@ class MainActivity : Activity() {
     private fun bigBtn(s: String, filled: Boolean, onClick: () -> Unit): Button {
         val b = smallBtn(s, filled, onClick)
         b.textSize = 16f
-        b.layoutParams = null
         return b
     }
 
