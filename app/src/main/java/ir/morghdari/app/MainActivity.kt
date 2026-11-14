@@ -405,6 +405,9 @@ class MainActivity : Activity() {
             val a = heat.text.toString().trim().toIntOrNull()
             if (a != null && a in 0..50) sendSms("SET HEAT $a") else toast("عدد را بین ۰ تا ۵۰ بنویسید")
         }, btnLp())
+        hc.addView(label("وقتی درب باز است گرما بیرون می‌رود. با این گزینه هیتر خودکار تا بسته شدن درب خاموش می‌ماند. (وضعیت درب را باید دستگاه بداند؛ یک‌بار «باز کن» یا «ببند» بزنید.)", 13f, cMuted))
+        hc.addView(bigBtn("هیتر با درب باز خاموش بماند", false) { sendSms("SET HDOOR 1") }, btnLp())
+        hc.addView(bigBtn("بدون توجه به درب (حالت قبلی)", false) { sendSms("SET HDOOR 0") }, btnLp())
         col.addView(hc, cardLp())
 
         val hum = edit("رطوبت روشن شدن فن (٪)", InputType.TYPE_CLASS_NUMBER)
@@ -415,6 +418,17 @@ class MainActivity : Activity() {
         fc.addView(bigBtn("ارسال", true) {
             val a = hum.text.toString().trim().toIntOrNull()
             if (a != null && a in 0..80) sendSms("SET HUM $a") else toast("عدد را بین ۰ تا ۸۰ بنویسید")
+        }, btnLp())
+        val ftp = edit("هر چند دقیقه یک‌بار (مثل 120)", InputType.TYPE_CLASS_NUMBER)
+        val fto = edit("چند دقیقه روشن باشد (مثل 1)", InputType.TYPE_CLASS_NUMBER)
+        fc.addView(label("⏱ چرخه‌ی زمانی فن", 15f, cText, bold = true))
+        fc.addView(label("مثلاً هر ۱۲۰ دقیقه، ۱ دقیقه روشن. عدد ۰ برای مدت روشن بودن، چرخه‌ی زمانی را خاموش می‌کند و فن فقط با رطوبت کار می‌کند.", 13f, cMuted))
+        fc.addView(ftp)
+        fc.addView(fto)
+        fc.addView(bigBtn("ارسال چرخه", true) {
+            val a = ftp.text.toString().trim().toIntOrNull()
+            val b = fto.text.toString().trim().toIntOrNull()
+            if (a != null && b != null && a in 5..1275 && b in 0..a) sendSms("SET FANT $a $b") else toast("دوره ۵ تا ۱۲۷۵ دقیقه و مدت روشن کمتر از دوره باشد")
         }, btnLp())
         col.addView(fc, cardLp())
 
@@ -482,7 +496,11 @@ class MainActivity : Activity() {
         cfg.addView(label("📋 تنظیمات فعلی دستگاه", 17f, cText, bold = true))
         val cfgText = label(prefs.getString("cfg", "هنوز دریافت نشده") ?: "", 14f, cMuted)
         cfg.addView(cfgText)
-        cfg.addView(bigBtn("دریافت تنظیمات", false) { sendSms("CFG") }, btnLp())
+        cfg.addView(label(prefs.getString("cfg2", "") ?: "", 14f, cMuted))
+        cfg.addView(bigBtn("دریافت تنظیمات", false) {
+            sendSms("CFG")
+            sendSms("CFG2")
+        }, btnLp())
         col.addView(cfg, cardLp())
 
         col.addView(spacer(24))

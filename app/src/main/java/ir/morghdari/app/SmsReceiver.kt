@@ -19,6 +19,7 @@ class SmsReceiver : BroadcastReceiver() {
         val e = prefs.edit()
         if (body.startsWith("T:")) e.putString("status", body).putString("status_time", Util.now())
         if (body.startsWith("HEAT:")) e.putString("cfg", body)
+        if (body.startsWith("FT:")) e.putString("cfg2", body)
         if (body.startsWith("ADM:")) e.putString("users", body)
         val log = (prefs.getString("log", "") ?: "").split("\n").filter { it.isNotBlank() }.toMutableList()
         log.add(0, Util.now() + "  ←  " + body)
