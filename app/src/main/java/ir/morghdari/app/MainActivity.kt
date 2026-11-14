@@ -77,6 +77,21 @@ class MainActivity : Activity() {
             requestPermissions(arrayOf(Manifest.permission.SEND_SMS, Manifest.permission.RECEIVE_SMS), 1)
         }
         show(0)
+
+        // گزارش خطا: اگر برنامه بسته شد، دفعه‌ی بعد متن خطا نشان داده می‌شود
+        val prev = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { t, e ->
+            try {
+                prefs.edit().putString("crash", android.util.Log.getStackTraceString(e)).commit()
+            } catch (_: Throwable) {
+            }
+            prev?.uncaughtException(t, e)
+        }
+        val crash = prefs.getString("crash", null)
+        if (crash != null) {
+            prefs.edit().remove("crash").apply()
+            android.app.AlertDialog.Builder(this).setTitle("گزارش خطا").setMessage(crash.take(1800)).setPositiveButton("باشه", null).show()
+        }
     }
 
     override fun onResume() {
