@@ -17,7 +17,7 @@ class SmsReceiver : BroadcastReceiver() {
         if (Util.last10(from) != dev) return
         val body = msgs.joinToString("") { it.messageBody ?: "" }.trim()
         val e = prefs.edit()
-        if (body.startsWith("T:")) e.putString("status", body)
+        if (body.startsWith("T:")) e.putString("status", body).putString("status_time", Util.now())
         if (body.startsWith("HEAT:")) e.putString("cfg", body)
         if (body.startsWith("ADM:")) e.putString("users", body)
         val log = (prefs.getString("log", "") ?: "").split("\n").filter { it.isNotBlank() }.toMutableList()

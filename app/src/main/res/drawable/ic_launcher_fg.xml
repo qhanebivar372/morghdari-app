@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- خورشید گرم پشت تخم‌مرغ -->
+    <path android:fillColor="#F2B84B"
+        android:pathData="M54,22 A32,32 0 1,1 53.9,22 Z"/>
+    <path android:fillColor="#F7CF7A"
+        android:pathData="M54,30 A24,24 0 1,1 53.9,30 Z"/>
+    <!-- تخم‌مرغ -->
+    <path android:fillColor="#FFF6E0"
+        android:pathData="M54,34 C65,34 73,49 73,60 C73,71 65,79 54,79 C43,79 35,71 35,60 C35,49 43,34 54,34 Z"/>
+    <!-- درخشش -->
+    <path android:fillColor="#FFFFFF"
+        android:pathData="M45,52 C46,47 49,44 52,43 C49,47 48,51 48,56 C46,56 45,55 45,52 Z"/>
+    <!-- نشانه‌ی جوانه‌ی سبز -->
+    <path android:fillColor="#1F6B4A"
+        android:pathData="M54,70 C54,64 58,61 64,61 C64,67 60,70 54,70 Z"/>
+    <path android:fillColor="#2E8B62"
+        android:pathData="M54,70 C54,66 50,63 45,63 C45,68 49,70 54,70 Z"/>
+</vector>
