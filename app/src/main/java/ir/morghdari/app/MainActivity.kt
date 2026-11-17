@@ -405,6 +405,12 @@ class MainActivity : Activity() {
             val a = heat.text.toString().trim().toIntOrNull()
             if (a != null && a in 0..50) sendSms("SET HEAT $a") else toast("عدد را بین ۰ تا ۵۰ بنویسید")
         }, btnLp())
+        val hyst = edit("خاموش شدن هیتر چند درجه بالاتر از دمای روشن شدن (۱ تا ۱۰، مثل 3)", InputType.TYPE_CLASS_NUMBER)
+        hc.addView(hyst)
+        hc.addView(bigBtn("ارسال فاصله‌ی خاموش شدن", false) {
+            val a = hyst.text.toString().trim().toIntOrNull()
+            if (a != null && a in 1..10) sendSms("SET HHYST $a") else toast("عدد را بین ۱ تا ۱۰ بنویسید")
+        }, btnLp())
         hc.addView(label("وقتی درب باز است گرما بیرون می‌رود. با این گزینه هیتر خودکار تا بسته شدن درب خاموش می‌ماند. (وضعیت درب را باید دستگاه بداند؛ یک‌بار «باز کن» یا «ببند» بزنید.)", 13f, cMuted))
         hc.addView(bigBtn("هیتر با درب باز خاموش بماند", false) { sendSms("SET HDOOR 1") }, btnLp())
         hc.addView(bigBtn("بدون توجه به درب (حالت قبلی)", false) { sendSms("SET HDOOR 0") }, btnLp())
@@ -488,6 +494,12 @@ class MainActivity : Activity() {
             val a = dk.text.toString().trim().toIntOrNull()
             val b = br.text.toString().trim().toIntOrNull()
             if (a != null && b != null && a in 1..99 && b > a && b <= 100) sendSms("SET LLDR $a $b") else toast("عدد شب کمتر از عدد روز باشد")
+        }, btnLp())
+        val lc = edit("چند دقیقه ثابت بماند تا روز/شب تأیید شود (۱ تا ۳۰، مثل 5)", InputType.TYPE_CLASS_NUMBER)
+        ldc.addView(lc)
+        ldc.addView(bigBtn("ارسال زمان تأیید", false) {
+            val a = lc.text.toString().trim().toIntOrNull()
+            if (a != null && a in 1..30) sendSms("SET LCONF $a") else toast("عدد را بین ۱ تا ۳۰ بنویسید")
         }, btnLp())
         ldc.addView(bigBtn("غیرفعال (فقط ساعت ثابت)", false) { sendSms("SET LLIGHT 0") }, btnLp())
         col.addView(ldc, cardLp())
@@ -575,6 +587,32 @@ class MainActivity : Activity() {
         sendSms("$pw $cmd")
     }
 
+    // بعد از فرستادن فرمان، وضعیت ذخیره‌شده فوراً به‌روز می‌شود تا لازم نباشد هر بار STAT زد
+    private fun applyOptimistic(cmd: String) {
+        val st = prefs.getString("status", null) ?: return
+        val c = cmd.trim().uppercase()
+        val parts = st.split(" ").toMutableList()
+        fun put(key: String, f: (String) -> String) {
+            val i = parts.indexOfFirst { it.startsWith("$key:") }
+            if (i >= 0) parts[i] = "$key:" + f(parts[i].substringAfter(":"))
+        }
+        val relay = Regex("^R([1-8])(ON|OFF)$").find(c)
+        val auto = Regex("^AUTO([1-8])$").find(c)
+        when {
+            relay != null -> put("R" + relay.groupValues[1]) { "M" + (if (relay.groupValues[2] == "ON") "1" else "0") }
+            auto != null -> put("R" + auto.groupValues[1]) { "A" + it.drop(1) }
+            c == "DOOROPEN" -> put("R2") { "M0" }
+            c == "DOORCLOSE" -> put("R2") { "M1" }
+            c == "LAMP ON" -> put("LP") { "M100" }
+            c == "LAMP OFF" -> put("LP") { "M0" }
+            c == "LAMP AUTO" -> put("LP") { "A" + it.drop(1) }
+            Regex("^LAMP \\d{1,3}$").matches(c) -> put("LP") { "M" + c.substring(5) }
+            else -> return
+        }
+        prefs.edit().putString("status", parts.joinToString(" ")).apply()
+        sendBroadcast(Intent(Util.ACTION_UPDATE).setPackage(packageName))
+    }
+
     private fun sendSms(text: String) {
         val dev = prefs.getString("device", "") ?: ""
         if (Util.last10(dev).length < 7) {
@@ -584,6 +622,7 @@ class MainActivity : Activity() {
         try {
             val mgr: SmsManager = if (Build.VERSION.SDK_INT >= 31) getSystemService(SmsManager::class.java) else @Suppress("DEPRECATION") SmsManager.getDefault()
             mgr.sendTextMessage(dev, null, text, null, null)
+            applyOptimistic(text)
             val log = (prefs.getString("log", "") ?: "").split("\n").filter { it.isNotBlank() }.toMutableList()
             val second = text.split(" ").getOrNull(1)
             val shown = if (second == "ADD" || second == "DEL" || second == "LIST" || second == "ADMIN" || second == "PASS") "••• " + text.substringAfter(" ") else text
