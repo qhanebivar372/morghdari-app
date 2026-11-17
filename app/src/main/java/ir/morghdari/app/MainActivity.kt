@@ -495,10 +495,10 @@ class MainActivity : Activity() {
             val b = br.text.toString().trim().toIntOrNull()
             if (a != null && b != null && a in 1..99 && b > a && b <= 100) sendSms("SET LLDR $a $b") else toast("عدد شب کمتر از عدد روز باشد")
         }, btnLp())
-        val lc = edit("چند دقیقه ثابت بماند تا روز/شب تأیید شود (۱ تا ۳۰، مثل 5)", InputType.TYPE_CLASS_NUMBER)
-        ldc.addView(lc)
+        val lcf = edit("چند دقیقه ثابت بماند تا روز/شب تأیید شود (۱ تا ۳۰، مثل 5)", InputType.TYPE_CLASS_NUMBER)
+        ldc.addView(lcf)
         ldc.addView(bigBtn("ارسال زمان تأیید", false) {
-            val a = lc.text.toString().trim().toIntOrNull()
+            val a = lcf.text.toString().trim().toIntOrNull()
             if (a != null && a in 1..30) sendSms("SET LCONF $a") else toast("عدد را بین ۱ تا ۳۰ بنویسید")
         }, btnLp())
         ldc.addView(bigBtn("غیرفعال (فقط ساعت ثابت)", false) { sendSms("SET LLIGHT 0") }, btnLp())
