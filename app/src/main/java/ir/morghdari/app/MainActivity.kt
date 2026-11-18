@@ -495,6 +495,12 @@ class MainActivity : Activity() {
             val b = br.text.toString().trim().toIntOrNull()
             if (a != null && b != null && a in 1..99 && b > a && b <= 100) sendSms("SET LLDR $a $b") else toast("عدد شب کمتر از عدد روز باشد")
         }, btnLp())
+        val dwf = edit("نور شروع صبح (طلوع از این عدد حساب می‌شود، مثل 20)", InputType.TYPE_CLASS_NUMBER)
+        ldc.addView(dwf)
+        ldc.addView(bigBtn("ارسال نور شروع صبح", false) {
+            val a = dwf.text.toString().trim().toIntOrNull()
+            if (a != null && a in 1..99) sendSms("SET LDAWN $a") else toast("عدد را بین ۱ تا ۹۹ بنویسید")
+        }, btnLp())
         val lcf = edit("چند دقیقه ثابت بماند تا روز/شب تأیید شود (۱ تا ۳۰، مثل 5)", InputType.TYPE_CLASS_NUMBER)
         ldc.addView(lcf)
         ldc.addView(bigBtn("ارسال زمان تأیید", false) {
