@@ -17,6 +17,13 @@ class SmsReceiver : BroadcastReceiver() {
         if (Util.last10(from) != dev) return
         val body = msgs.joinToString("") { it.messageBody ?: "" }.trim()
         val e = prefs.edit()
+        val bad = body.startsWith("Invalid", true) || body.startsWith("Wrong", true) || body.startsWith("Error", true) || body.contains("not allowed", true)
+        if (body.startsWith("T:") || bad) {
+            e.remove("pending")
+        } else if (!bad) {
+            e.apply()
+            Util.confirmPending(prefs)
+        }
         if (body.startsWith("T:")) e.putString("status", body).putString("status_time", Util.now())
         if (body.startsWith("HEAT:")) e.putString("cfg", body)
         if (body.startsWith("FT:")) e.putString("cfg2", body)
