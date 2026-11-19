@@ -505,6 +505,16 @@ class MainActivity : Activity() {
             val b = br.text.toString().trim().toIntOrNull()
             if (a != null && b != null && a in 1..99 && b > a && b <= 100) sendSms("SET LLDR $a $b") else toast("عدد شب کمتر از عدد روز باشد")
         }, btnLp())
+        val sunR = edit("ساعت طلوع (مثل 06:30)", InputType.TYPE_CLASS_DATETIME)
+        val sunS = edit("ساعت غروب (مثل 17:45)", InputType.TYPE_CLASS_DATETIME)
+        ldc.addView(sunR)
+        ldc.addView(sunS)
+        ldc.addView(bigBtn("ارسال ساعت طلوع و غروب", false) {
+            val re = Regex("^\\d{1,2}:\\d{2}$")
+            val x = sunR.text.toString().trim()
+            val y = sunS.text.toString().trim()
+            if (re.matches(x) && re.matches(y)) sendSms("SET LSUN $x $y") else toast("ساعت‌ها را مثل 06:30 بنویسید")
+        }, btnLp())
         val dwf = edit("نور شروع صبح (طلوع از این عدد حساب می‌شود، مثل 20)", InputType.TYPE_CLASS_NUMBER)
         ldc.addView(dwf)
         ldc.addView(bigBtn("ارسال نور شروع صبح", false) {
