@@ -102,6 +102,13 @@ class MainActivity : Activity() {
             registerReceiver(updateReceiver, IntentFilter(Util.ACTION_UPDATE))
         }
         show(tab)
+        // اگر وضعیت بیش از ۱۰ دقیقه قدیمی است، خودکار یک STAT درخواست می‌شود (حداکثر هر ۵ دقیقه یک بار)
+        val nowMs = System.currentTimeMillis()
+        if (Util.last10(prefs.getString("device", "") ?: "").length >= 7 &&
+            nowMs - prefs.getLong("status_ms", 0L) > 10 * 60 * 1000 && nowMs - prefs.getLong("auto_ms", 0L) > 5 * 60 * 1000) {
+            prefs.edit().putLong("auto_ms", nowMs).apply()
+            sendSms("STAT")
+        }
     }
 
     override fun onPause() {
