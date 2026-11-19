@@ -249,7 +249,7 @@ class MainActivity : Activity() {
         val nm = label(" $name", 16f, cText, bold = true)
         row.addView(nm)
         c.addView(row)
-        c.addView(chip(if (!known) "نامشخص" else if (on) "روشن" else "خاموش", on))
+        c.addView(chip(if (!known) "نامشخص" else if (on) "روشن" else "خاموش", on, Util.isPending(prefs, idx)))
         if (known) c.addView(label(if (relayManual(m, k)) "دستی" else "خودکار", 12f, cMuted))
         c.addView(smallBtn(if (on) "خاموش کن" else "روشن کن", true) { sendSms(if (on) "R${idx}OFF" else "R${idx}ON") })
         c.addView(smallBtn("خودکار", false) { sendSms("AUTO$idx") })
@@ -308,8 +308,18 @@ class MainActivity : Activity() {
         c.background = cardBg()
         c.gravity = Gravity.CENTER_HORIZONTAL
         c.addView(label("کانال ${fa(idx.toString())}", 14f, cText, bold = true))
-        c.addView(chip(if (!m.containsKey(k)) "نامشخص" else if (on) "روشن" else "خاموش", on))
-        c.addView(smallBtn(if (on) "خاموش" else "روشن", true) { sendSms(if (on) "R${idx}OFF" else "R${idx}ON") })
+        c.addView(chip(if (!m.containsKey(k)) "نامشخص" else if (on) "روشن" else "خاموش", on, Util.isPending(prefs, idx)))
+        val mins = edit("دقیقه (۱ تا ۱۴۴۰، خالی = تا خاموش کردن)", InputType.TYPE_CLASS_NUMBER)
+        mins.textSize = 12f
+        c.addView(mins)
+        c.addView(smallBtn(if (on) "خاموش" else "روشن", true) {
+            val t = mins.text.toString().trim()
+            val v = t.toIntOrNull()
+            if (on) sendSms("R${idx}OFF")
+            else if (t.isEmpty()) sendSms("R${idx}ON")
+            else if (v != null && v in 1..1440) sendSms("R${idx}ON $v")
+            else toast("زمان بین ۱ تا ۱۴۴۰ دقیقه (۲۴ ساعت)")
+        })
         return c
     }
 
@@ -593,32 +603,6 @@ class MainActivity : Activity() {
         sendSms("$pw $cmd")
     }
 
-    // بعد از فرستادن فرمان، وضعیت ذخیره‌شده فوراً به‌روز می‌شود تا لازم نباشد هر بار STAT زد
-    private fun applyOptimistic(cmd: String) {
-        val st = prefs.getString("status", null) ?: return
-        val c = cmd.trim().uppercase()
-        val parts = st.split(" ").toMutableList()
-        fun put(key: String, f: (String) -> String) {
-            val i = parts.indexOfFirst { it.startsWith("$key:") }
-            if (i >= 0) parts[i] = "$key:" + f(parts[i].substringAfter(":"))
-        }
-        val relay = Regex("^R([1-8])(ON|OFF)$").find(c)
-        val auto = Regex("^AUTO([1-8])$").find(c)
-        when {
-            relay != null -> put("R" + relay.groupValues[1]) { "M" + (if (relay.groupValues[2] == "ON") "1" else "0") }
-            auto != null -> put("R" + auto.groupValues[1]) { "A" + it.drop(1) }
-            c == "DOOROPEN" -> put("R2") { "M0" }
-            c == "DOORCLOSE" -> put("R2") { "M1" }
-            c == "LAMP ON" -> put("LP") { "M100" }
-            c == "LAMP OFF" -> put("LP") { "M0" }
-            c == "LAMP AUTO" -> put("LP") { "A" + it.drop(1) }
-            Regex("^LAMP \\d{1,3}$").matches(c) -> put("LP") { "M" + c.substring(5) }
-            else -> return
-        }
-        prefs.edit().putString("status", parts.joinToString(" ")).apply()
-        sendBroadcast(Intent(Util.ACTION_UPDATE).setPackage(packageName))
-    }
-
     private fun sendSms(text: String) {
         val dev = prefs.getString("device", "") ?: ""
         if (Util.last10(dev).length < 7) {
@@ -628,7 +612,8 @@ class MainActivity : Activity() {
         try {
             val mgr: SmsManager = if (Build.VERSION.SDK_INT >= 31) getSystemService(SmsManager::class.java) else @Suppress("DEPRECATION") SmsManager.getDefault()
             mgr.sendTextMessage(dev, null, text, null, null)
-            applyOptimistic(text)
+            Util.addPending(prefs, text)
+            sendBroadcast(Intent(Util.ACTION_UPDATE).setPackage(packageName))
             val log = (prefs.getString("log", "") ?: "").split("\n").filter { it.isNotBlank() }.toMutableList()
             val second = text.split(" ").getOrNull(1)
             val shown = if (second == "ADD" || second == "DEL" || second == "LIST" || second == "ADMIN" || second == "PASS") "••• " + text.substringAfter(" ") else text
@@ -673,10 +658,11 @@ class MainActivity : Activity() {
         return t
     }
 
-    private fun chip(s: String, on: Boolean): TextView {
-        val t = label(s, 13f, if (on) cGreenDark else cMuted, bold = true)
-        t.background = roundBg(if (on) cChipOn else cChipOff, 14)
-        t.setPadding(dp(12), dp(4), dp(12), dp(4))
+    private fun chip(s: String, on: Boolean, pend: Boolean = false): TextView {
+        val t = label(if (pend) "⏳ در انتظار تأیید…" else s, 14f, Color.WHITE, bold = true)
+        val bg = if (pend) Color.parseColor("#C9860A") else if (on) cGreen else Color.parseColor("#6B665B")
+        t.background = roundBg(bg, 14)
+        t.setPadding(dp(14), dp(5), dp(14), dp(5))
         val lp = LinearLayout.LayoutParams(-2, -2)
         lp.setMargins(0, dp(8), 0, dp(4))
         t.layoutParams = lp
