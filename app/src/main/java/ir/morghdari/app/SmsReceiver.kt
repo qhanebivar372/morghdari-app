@@ -24,7 +24,7 @@ class SmsReceiver : BroadcastReceiver() {
             e.apply()
             Util.confirmPending(prefs)
         }
-        if (body.startsWith("T:")) e.putString("status", body).putString("status_time", Util.now())
+        if (body.startsWith("T:")) e.putString("status", body).putString("status_time", Util.now()).putLong("status_ms", System.currentTimeMillis())
         if (body.startsWith("HEAT:")) e.putString("cfg", body)
         if (body.startsWith("FT:")) e.putString("cfg2", body)
         if (body.startsWith("ADM:")) e.putString("users", body)
